@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="reset.css">
+    <title>Thing Doer 2000</title>
+</head>
+
+<body>
+    <!-- <script src="https://unpkg.com/petite-vue" defer init></script> -->
+    <script type="module">
+        import { createApp, reactive } from 'https://unpkg.com/petite-vue?module';
+        const store = reactive({
+            runners: {},
+            add(tag, runner) {
+                this.runners[tag] = runner;
+            },
+            setStatus(tag,status) {
+                this.runners[tag].status = status;
+            },
+            addOutput(tag, line) {
+                console.log(this.runners[tag])
+                this.runners[tag].output = [...this.runners[tag].output, line];
+            }
+
+        })
+        window.electronAPI.onMessage((_event, value) => {
+            let { tag, data } = value
+            console.log(tag, data)
+            if (store.runners[tag] !== undefined) {
+                let str = new TextDecoder().decode(data);
+                store.addOutput(tag, str)
+            }
+
+        })
+
+        window.electronAPI.onClose((_event, value) => {
+            let { tag } = value
+            console.log(tag, "stopped")
+            if (store.runners[tag] !== undefined) {
+                store.setStatus(tag, "done")
+            }
+        })
+        createApp({
+            iter: 3,
+            tag: "",
+            store,
+            show: false,
+            setTag(e) {this.tag = e.target.value},
+            setIter(e) {this.iter = e.target.value},
+
+            addRunner() {
+                let tag = this.tag;
+                let iter = this.iter;
+                this.show = true;
+                this.tag = ""
+                this.iter = 3
+                if (tag === "") {
+                    tag = `Runner_${(Math.random() + 1).toString(36).substring(7)}`
+                }
+                console.log("adding runner ", tag, iter)
+                this.store.add(tag, { tag, status: "running", output: []})
+                window.electronAPI.startDoing(iter, tag)
+            } 
+        }).mount('#runners')
+    </script>
+
+
+
+    <div id="runners" v-scope class="content">
+        <div id="new-runner" class="runner-form">
+            <h1 class="row-span-2"> 
+                Add thing doer
+            </h1>
+            <label>
+                Tag
+                <input type="text" name="tag" id="input-tag" placeholder="TAG" :value="tag" @input="setTag" />
+            </label>
+            <label>
+                Run for 
+                <input type="number" name="run-for" id="input-run-for" :value="iter" @input="setIter">
+                seconds
+            </label>
+            <button class="row-span-2" @click="addRunner">Do things!</button>
+        </div>
+        <div id="monitor" class="monitor" v-show="show">
+            <div v-for="runner in store.runners" :key="runner.tag" class="runner stopped" :class="runner.status === 'running' ? 'running' : 'stopped'">
+                <div class="tag">
+                    <span>{{runner.tag}}</span>
+                </div>
+                <div class="status">
+                    <span>{{runner.status}}</span>
+                </div>
+                <div class="lines">
+                    <div v-for="line in runner.output" class="line">
+                        <p>{{line}}</p>
+                    </div>
+    
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer>
+        We are using Node.js <span id="node-version"></span>,
+        Chromium <span id="chrome-version"></span>,
+        and Electron <span id="electron-version"></span>.
+    </footer>
+
+</body>
+
+<style>
+.content{
+    --primary: rgb(126, 50, 224);
+
+    display: grid;
+    margin: 2rem;
+}
+
+.runner-form {
+    display: grid;
+    margin: 2rem 0;
+    background-color: var(--primary);
+    padding: 1rem;
+    border-radius: 1rem;
+    grid-template-columns: 2;
+    color: white;
+    width: 100vw-4rem;
+}
+
+.runner-form > * {
+    padding: auto;
+    margin-top: 5px;
+}
+
+.runner-form > h1 {
+    color: white;
+    font-weight: bold;
+    font-size: 1.5rem;
+    text-align: center;
+}
+
+.runner-form > button {
+    background-color: white;
+    border: none;
+    border-radius: 1rem;
+    font-weight: bold;
+    font-size: 1.3rem;
+    color:  var(--primary)
+}
+
+.monitor {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 400px;
+    grid-gap: 1rem;
+    overflow-x: scroll;
+}
+
+.runner {
+    --running: rgb(173, 123, 238);
+    --stopped: rgb(235, 224, 250);
+
+    margin: 2rem 0;
+    padding: 1rem;
+    border-radius: 1rem;
+    grid-template-columns: 2;
+    color: black
+
+}
+.tag {
+    color:  var(--primary);
+    font-weight: bold;
+    text-align: center;
+}
+
+.status {
+    margin-top: 1rem;
+    text-align: center;
+
+    color:  var(--primary)
+}
+
+.lines {
+    background-color: white;
+    border-radius: 1rem;
+    padding: .5rem 1rem;
+    margin-top: 1rem;
+}
+
+.running {
+    background-color: var(--running);
+}
+
+.stopped {
+    background-color: var(--stopped);
+
+}
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font: 1rem sans-serif;
+    overflow-y: hidden;
+}
+
+html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 644px;
+    height: 20px;
+    margin: 0 auto;
+}
+</style>
+
+</html>
