@@ -87,7 +87,7 @@
             <button class="row-span-2" @click="addRunner">Do things!</button>
         </div>
         <div id="monitor" class="monitor" v-show="show">
-            <div v-for="runner in store.runners" :key="runner.tag" class="runner stopped" :class="runner.status === 'running' ? 'running' : 'stopped'">
+            <div v-for="runner in store.runners" :key="runner.tag" class="runner" :class="runner.status === 'running' ? 'running' : 'stopped'">
                 <div class="tag">
                     <span>{{runner.tag}}</span>
                 </div>
