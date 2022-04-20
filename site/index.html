@@ -16,7 +16,7 @@
         new Date(seconds * 1000).toISOString().substr(14, 8);
 
     const formatMetadata = (metadata) =>
-        `${metadata.StreamTitle ? metadata.StreamTitle + " auf " : ''}${endpoint.selectedOptions[0].innerText}`
+        `${metadata.StreamTitle ? metadata.StreamTitle + "<span class=\"station_label\"> auf " : '<span class=\"station_label\">'}${endpoint.selectedOptions[0].innerText}</span>`
 
     const onMetadata = (metadata) => {
         metadataEl.innerHTML = `<td>${formatMetadata(metadata)}</td>`;
@@ -117,6 +117,11 @@
         padding: 3rem;
         height: 100%;
         font: 1rem sans-serif;
+    }
+
+    .station_label {
+        font-size: 0.85rem;
+        color: gray;
     }
 
 </style>
